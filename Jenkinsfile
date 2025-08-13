@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "jenkins-flask-demo"
-        DOCKER_REGISTRY = "saibharatvanam34"  // your Docker Hub username
+        DOCKER_REGISTRY = "saibharatvanam34"
     }
 
     stages {
@@ -15,19 +15,22 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'pip3 install -r flask-app/requirements.txt'
+                sh 'pip3 install --user -r flask-app/requirements.txt'
             }
         }
 
         stage('Unit Test') {
             steps {
-                sh 'pytest flask-app/test_app.py'
+                sh '''
+                   export PATH=$HOME/.local/bin:$PATH
+                   pytest flask-app/test_app.py
+                '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${IMAGE_NAME} ./flask-app"
+                sh 'docker build -t $DOCKER_REGISTRY/$IMAGE_NAME:latest ./flask-app'
             }
         }
 
@@ -35,9 +38,8 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'dockerhub-token', variable: 'DOCKER_TOKEN')]) {
                     sh '''
-                        echo $DOCKER_TOKEN | docker login -u ${DOCKER_REGISTRY} --password-stdin
-                        docker tag ${IMAGE_NAME}:latest ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
-                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                        echo $DOCKER_TOKEN | docker login -u $DOCKER_REGISTRY --password-stdin
+                        docker push $DOCKER_REGISTRY/$IMAGE_NAME:latest
                     '''
                 }
             }
