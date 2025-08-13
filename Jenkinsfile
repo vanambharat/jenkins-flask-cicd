@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "jenkins-flask-demo"
-        DOCKER_REGISTRY = "yourdockerhubusername"
+        DOCKER_REGISTRY = "saibharatvanam34"  // your Docker Hub username
     }
 
     stages {
@@ -27,7 +27,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t  ./flask-app'
+                sh "docker build -t ${IMAGE_NAME} ./flask-app"
             }
         }
 
@@ -35,9 +35,9 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'dockerhub-token', variable: 'DOCKER_TOKEN')]) {
                     sh '''
-                        echo  | docker login -u  --password-stdin
-                        docker tag  /:latest
-                        docker push /:latest
+                        echo $DOCKER_TOKEN | docker login -u ${DOCKER_REGISTRY} --password-stdin
+                        docker tag ${IMAGE_NAME}:latest ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
                     '''
                 }
             }
@@ -60,3 +60,4 @@ pipeline {
         }
     }
 }
+
